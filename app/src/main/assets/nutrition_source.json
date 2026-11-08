@@ -1,0 +1,16 @@
+{
+  "datasetName": "전국통합식품영양성분정보_음식_표준데이터",
+  "originalFileName": "전국통합식품영양성분정보_음식_표준데이터-20261108.xls",
+  "sources": [
+    {
+      "sourceName": "농촌진흥청(국가표준식품성분표)",
+      "providerName": "식품의약품안전처",
+      "referenceDate": "2026-09-29"
+    },
+    {
+      "sourceName": "식품의약품안전처",
+      "providerName": "식품의약품안전처",
+      "referenceDate": "2026-09-29"
+    }
+  ]
+}

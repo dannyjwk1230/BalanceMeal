@@ -1,0 +1,1102 @@
+[
+  {
+    "code": "D301-022000000-0001",
+    "name": "쌀밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 37.33,
+      "proteinG": 3.36,
+      "fatG": 0.32,
+      "energyKcal": 166
+    }
+  },
+  {
+    "code": "D101-050000000-0001",
+    "name": "현미밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 38.9,
+      "proteinG": 3.1,
+      "fatG": 0.47,
+      "energyKcal": 172
+    }
+  },
+  {
+    "code": "D101-032000000-0001",
+    "name": "잡곡밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 29.33,
+      "proteinG": 5.3,
+      "fatG": 0.87,
+      "energyKcal": 146
+    }
+  },
+  {
+    "code": "D101-016000000-0001",
+    "name": "보리밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 36.77,
+      "proteinG": 2.9,
+      "fatG": 0.24,
+      "energyKcal": 161
+    }
+  },
+  {
+    "code": "D301-027000000-0001",
+    "name": "오곡밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 32.93,
+      "proteinG": 4.78,
+      "fatG": 0.52,
+      "energyKcal": 156
+    }
+  },
+  {
+    "code": "D101-018000000-0001",
+    "name": "비빔밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 18.84,
+      "proteinG": 6.86,
+      "fatG": 4.32,
+      "energyKcal": 142
+    }
+  },
+  {
+    "code": "D101-017000000-0001",
+    "name": "볶음밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 33.97,
+      "proteinG": 5.56,
+      "fatG": 2.76,
+      "energyKcal": 183
+    }
+  },
+  {
+    "code": "D101-007000000-0001",
+    "name": "김밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 19.98,
+      "proteinG": 4.84,
+      "fatG": 4.55,
+      "energyKcal": 140
+    }
+  },
+  {
+    "code": "D101-044000000-0001",
+    "name": "카레라이스",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 20.74,
+      "proteinG": 3.11,
+      "fatG": 1.4,
+      "energyKcal": 108
+    }
+  },
+  {
+    "code": "D101-028000000-0001",
+    "name": "오므라이스",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 20.54,
+      "proteinG": 6.5,
+      "fatG": 7.23,
+      "energyKcal": 173
+    }
+  },
+  {
+    "code": "D301-002000000-0001",
+    "name": "곤드레나물밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 28.26,
+      "proteinG": 2.94,
+      "fatG": 2.71,
+      "energyKcal": 149
+    }
+  },
+  {
+    "code": "D101-047000000-0001",
+    "name": "콩나물밥",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 22.39,
+      "proteinG": 4.68,
+      "fatG": 1.58,
+      "energyKcal": 123
+    }
+  },
+  {
+    "code": "D103-148000000-0001",
+    "name": "라면",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 13.65,
+      "proteinG": 1.72,
+      "fatG": 2.28,
+      "energyKcal": 82
+    }
+  },
+  {
+    "code": "D103-168000000-0001",
+    "name": "자장면",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 14.37,
+      "proteinG": 2.69,
+      "fatG": 2.22,
+      "energyKcal": 88
+    }
+  },
+  {
+    "code": "D103-172000000-0001",
+    "name": "짬뽕",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 8.26,
+      "proteinG": 2.79,
+      "fatG": 1.54,
+      "energyKcal": 58
+    }
+  },
+  {
+    "code": "D103-174000000-0001",
+    "name": "칼국수",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 14.9,
+      "proteinG": 3.3,
+      "fatG": 0.49,
+      "energyKcal": 77
+    }
+  },
+  {
+    "code": "D303-157000000-0002",
+    "name": "비빔국수",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 20.94,
+      "proteinG": 3.2,
+      "fatG": 1.86,
+      "energyKcal": 113
+    }
+  },
+  {
+    "code": "D103-173000000-0001",
+    "name": "쫄면",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 23.26,
+      "proteinG": 3.21,
+      "fatG": 2.52,
+      "energyKcal": 129
+    }
+  },
+  {
+    "code": "D103-175000000-0001",
+    "name": "콩국수",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 8.92,
+      "proteinG": 3.9,
+      "fatG": 3.35,
+      "energyKcal": 81
+    }
+  },
+  {
+    "code": "D103-160000000-0001",
+    "name": "수제비",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 11.08,
+      "proteinG": 2.31,
+      "fatG": 0.52,
+      "energyKcal": 58
+    }
+  },
+  {
+    "code": "D103-145000000-0001",
+    "name": "떡국",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 16.37,
+      "proteinG": 3.43,
+      "fatG": 0.53,
+      "energyKcal": 84
+    }
+  },
+  {
+    "code": "D303-151000000-0001",
+    "name": "만두국",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 6.83,
+      "proteinG": 3.06,
+      "fatG": 2.49,
+      "energyKcal": 62
+    }
+  },
+  {
+    "code": "D105-223000000-0001",
+    "name": "미역국",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.87,
+      "proteinG": 0.65,
+      "fatG": 0.61,
+      "energyKcal": 12
+    }
+  },
+  {
+    "code": "D105-253000000-0001",
+    "name": "콩나물국",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.61,
+      "proteinG": 0.74,
+      "fatG": 0.09,
+      "energyKcal": 6
+    }
+  },
+  {
+    "code": "D105-226000000-0001",
+    "name": "북어국",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.84,
+      "proteinG": 3.89,
+      "fatG": 0.98,
+      "energyKcal": 28
+    }
+  },
+  {
+    "code": "D105-210000000-0001",
+    "name": "달걀국",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.69,
+      "proteinG": 0.93,
+      "fatG": 0.74,
+      "energyKcal": 13
+    }
+  },
+  {
+    "code": "D105-199000000-0001",
+    "name": "갈비탕",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.4,
+      "proteinG": 8.51,
+      "fatG": 2.06,
+      "energyKcal": 54
+    }
+  },
+  {
+    "code": "D105-231000000-0001",
+    "name": "설렁탕",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.36,
+      "proteinG": 4.26,
+      "fatG": 0.58,
+      "energyKcal": 24
+    }
+  },
+  {
+    "code": "D105-228000000-0001",
+    "name": "삼계탕",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 3.84,
+      "proteinG": 10.68,
+      "fatG": 4.8,
+      "energyKcal": 101
+    }
+  },
+  {
+    "code": "D105-245000000-0001",
+    "name": "육개장",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 1.49,
+      "proteinG": 3.68,
+      "fatG": 0.99,
+      "energyKcal": 30
+    }
+  },
+  {
+    "code": "D306-266000000-0001",
+    "name": "김치찌개",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 2.98,
+      "proteinG": 3.77,
+      "fatG": 3.75,
+      "energyKcal": 61
+    }
+  },
+  {
+    "code": "D106-275000000-0001",
+    "name": "된장찌개",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 4.44,
+      "proteinG": 3.38,
+      "fatG": 1.63,
+      "energyKcal": 46
+    }
+  },
+  {
+    "code": "D106-284000000-0001",
+    "name": "부대찌개",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 10.27,
+      "proteinG": 5.86,
+      "fatG": 6.49,
+      "energyKcal": 123
+    }
+  },
+  {
+    "code": "D106-297000000-0001",
+    "name": "청국장찌개",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 1.92,
+      "proteinG": 5.03,
+      "fatG": 2.11,
+      "energyKcal": 47
+    }
+  },
+  {
+    "code": "D106-260000000-0001",
+    "name": "감자탕",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 2.27,
+      "proteinG": 6.31,
+      "fatG": 4.06,
+      "energyKcal": 71
+    }
+  },
+  {
+    "code": "D106-299000000-0001",
+    "name": "콩비지찌개",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 3.57,
+      "proteinG": 6.74,
+      "fatG": 3.08,
+      "energyKcal": 69
+    }
+  },
+  {
+    "code": "D104-191000000-0001",
+    "name": "전복죽",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 9.62,
+      "proteinG": 1.82,
+      "fatG": 3.73,
+      "energyKcal": 79
+    }
+  },
+  {
+    "code": "D104-197000000-0001",
+    "name": "호박죽",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 6.58,
+      "proteinG": 1.93,
+      "fatG": 1.71,
+      "energyKcal": 49
+    }
+  },
+  {
+    "code": "D104-195000000-0001",
+    "name": "팥죽",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 16.66,
+      "proteinG": 3.17,
+      "fatG": 0.19,
+      "energyKcal": 81
+    }
+  },
+  {
+    "code": "D104-194000000-0001",
+    "name": "채소죽",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 7.62,
+      "proteinG": 1.69,
+      "fatG": 0.69,
+      "energyKcal": 43
+    }
+  },
+  {
+    "code": "D108-386000000-0001",
+    "name": "소불고기",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 4.26,
+      "proteinG": 16.41,
+      "fatG": 9.66,
+      "energyKcal": 170
+    }
+  },
+  {
+    "code": "D108-382000000-0001",
+    "name": "삼겹살구이",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.35,
+      "proteinG": 22.56,
+      "fatG": 41.69,
+      "energyKcal": 467
+    }
+  },
+  {
+    "code": "D308-388000000-0001",
+    "name": "연어구이",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.2,
+      "proteinG": 24.78,
+      "fatG": 14.94,
+      "energyKcal": 234
+    }
+  },
+  {
+    "code": "D108-383000000-0001",
+    "name": "삼치구이",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 1.45,
+      "proteinG": 21.42,
+      "fatG": 9.57,
+      "energyKcal": 178
+    }
+  },
+  {
+    "code": "D308-406000000-0001",
+    "name": "훈제오리",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 4.83,
+      "proteinG": 17.22,
+      "fatG": 25.63,
+      "energyKcal": 319
+    }
+  },
+  {
+    "code": "D110-472000000-0001",
+    "name": "멸치볶음",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 13.62,
+      "proteinG": 39.44,
+      "fatG": 7.08,
+      "energyKcal": 276
+    }
+  },
+  {
+    "code": "D110-486000000-0001",
+    "name": "어묵볶음",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 24.33,
+      "proteinG": 8.41,
+      "fatG": 7.29,
+      "energyKcal": 197
+    }
+  },
+  {
+    "code": "D110-488000000-0001",
+    "name": "오징어볶음",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 7.43,
+      "proteinG": 9.85,
+      "fatG": 6.52,
+      "energyKcal": 128
+    }
+  },
+  {
+    "code": "D110-492000000-0001",
+    "name": "잡채",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 24.26,
+      "proteinG": 4.71,
+      "fatG": 3.3,
+      "energyKcal": 146
+    }
+  },
+  {
+    "code": "D110-467000000-0001",
+    "name": "떡볶이",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 25.96,
+      "proteinG": 3.51,
+      "fatG": 2.96,
+      "energyKcal": 144
+    }
+  },
+  {
+    "code": "D113-586000000-0001",
+    "name": "시금치나물",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 3.36,
+      "proteinG": 3.74,
+      "fatG": 4.46,
+      "energyKcal": 69
+    }
+  },
+  {
+    "code": "D113-597000000-0001",
+    "name": "콩나물무침",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 3.2,
+      "proteinG": 3.86,
+      "fatG": 4.54,
+      "energyKcal": 69
+    }
+  },
+  {
+    "code": "D113-584000000-0001",
+    "name": "숙주나물",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 2.96,
+      "proteinG": 2.22,
+      "fatG": 1.58,
+      "energyKcal": 35
+    }
+  },
+  {
+    "code": "D113-569000000-0001",
+    "name": "고사리나물무침",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 6.28,
+      "proteinG": 3.78,
+      "fatG": 5.52,
+      "energyKcal": 90
+    }
+  },
+  {
+    "code": "D114-627000000-0001",
+    "name": "무생채",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 7.33,
+      "proteinG": 2.43,
+      "fatG": 1.11,
+      "energyKcal": 49
+    }
+  },
+  {
+    "code": "D114-645000000-0001",
+    "name": "오이생채",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 8.96,
+      "proteinG": 1.78,
+      "fatG": 2.9,
+      "energyKcal": 69
+    }
+  },
+  {
+    "code": "D114-619000000-0001",
+    "name": "도라지생채",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 16.15,
+      "proteinG": 2.06,
+      "fatG": 0.51,
+      "energyKcal": 77
+    }
+  },
+  {
+    "code": "D111-509000000-0001",
+    "name": "고등어조림",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 4.1,
+      "proteinG": 11.25,
+      "fatG": 8.84,
+      "energyKcal": 141
+    }
+  },
+  {
+    "code": "D111-517000000-0001",
+    "name": "두부조림",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 4.4,
+      "proteinG": 9.64,
+      "fatG": 9.66,
+      "energyKcal": 143
+    }
+  },
+  {
+    "code": "D111-508000000-0001",
+    "name": "감자조림",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 18.1,
+      "proteinG": 2.4,
+      "fatG": 3.52,
+      "energyKcal": 114
+    }
+  },
+  {
+    "code": "D111-528000000-0001",
+    "name": "연근조림",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 29.42,
+      "proteinG": 2.68,
+      "fatG": 5.1,
+      "energyKcal": 174
+    }
+  },
+  {
+    "code": "D107-324000000-0001",
+    "name": "돼지갈비찜",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 7.44,
+      "proteinG": 13.29,
+      "fatG": 12.32,
+      "energyKcal": 194
+    }
+  },
+  {
+    "code": "D107-344000000-0001",
+    "name": "족발",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.93,
+      "proteinG": 26.04,
+      "fatG": 13.91,
+      "energyKcal": 233
+    }
+  },
+  {
+    "code": "D107-337000000-0001",
+    "name": "순대",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 35.73,
+      "proteinG": 2.75,
+      "fatG": 3.64,
+      "energyKcal": 187
+    }
+  },
+  {
+    "code": "D315-670000000-0001",
+    "name": "배추김치",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 6.49,
+      "proteinG": 1.98,
+      "fatG": 0.43,
+      "energyKcal": 38
+    }
+  },
+  {
+    "code": "D115-665000000-0001",
+    "name": "깍두기",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 4.24,
+      "proteinG": 1.56,
+      "fatG": 1.06,
+      "energyKcal": 33
+    }
+  },
+  {
+    "code": "D315-675000000-0001",
+    "name": "열무김치",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 5.87,
+      "proteinG": 2.39,
+      "fatG": 0.38,
+      "energyKcal": 36
+    }
+  },
+  {
+    "code": "D315-679000000-0001",
+    "name": "오이소박이",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 6.66,
+      "proteinG": 1.76,
+      "fatG": 0.37,
+      "energyKcal": 37
+    }
+  },
+  {
+    "code": "D109-416000000-0001",
+    "name": "달걀말이",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 1.45,
+      "proteinG": 17.21,
+      "fatG": 13.21,
+      "energyKcal": 193
+    }
+  },
+  {
+    "code": "D109-419000000-0001",
+    "name": "두부부침",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 2.07,
+      "proteinG": 10.92,
+      "fatG": 9.77,
+      "energyKcal": 140
+    }
+  },
+  {
+    "code": "D109-412000000-0001",
+    "name": "김치전",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 19.01,
+      "proteinG": 5.05,
+      "fatG": 4.2,
+      "energyKcal": 134
+    }
+  },
+  {
+    "code": "D312-550000000-0002",
+    "name": "돈가스",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 15.89,
+      "proteinG": 13.85,
+      "fatG": 17.94,
+      "energyKcal": 280
+    }
+  },
+  {
+    "code": "D312-549000000-0001",
+    "name": "닭튀김",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 16.27,
+      "proteinG": 21.73,
+      "fatG": 16.57,
+      "energyKcal": 301
+    }
+  },
+  {
+    "code": "D112-537000000-0001",
+    "name": "감자튀김",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 35.15,
+      "proteinG": 4.55,
+      "fatG": 17.01,
+      "energyKcal": 312
+    }
+  },
+  {
+    "code": "D102-100000000-0001",
+    "name": "식빵",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 50.91,
+      "proteinG": 9.34,
+      "fatG": 2.6,
+      "energyKcal": 264
+    }
+  },
+  {
+    "code": "D102-095000000-0001",
+    "name": "베이글",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 53.48,
+      "proteinG": 10,
+      "fatG": 5.83,
+      "energyKcal": 306
+    }
+  },
+  {
+    "code": "D302-096000000-0001",
+    "name": "샌드위치",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 19.08,
+      "proteinG": 4.27,
+      "fatG": 12.54,
+      "energyKcal": 206
+    }
+  },
+  {
+    "code": "D102-053000000-0001",
+    "name": "가래떡",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 43.73,
+      "proteinG": 3.92,
+      "fatG": 0.51,
+      "energyKcal": 195
+    }
+  },
+  {
+    "code": "D102-070000000-0001",
+    "name": "인절미",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 50.07,
+      "proteinG": 5.64,
+      "fatG": 2.16,
+      "energyKcal": 242
+    }
+  },
+  {
+    "code": "D302-134000000-0001",
+    "name": "약과",
+    "unit": "G",
+    "nutrientsPer100": {
+      "carbohydrateG": 84.89,
+      "proteinG": 4.2,
+      "fatG": 4.75,
+      "energyKcal": 399
+    }
+  },
+  {
+    "code": "D320-748080000-0002",
+    "name": "커피_아메리카노",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.35,
+      "proteinG": 0.23,
+      "fatG": 0.13,
+      "energyKcal": 3
+    }
+  },
+  {
+    "code": "D320-748110000-0002",
+    "name": "커피_카페라떼",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 13.42,
+      "proteinG": 2.86,
+      "fatG": 3.67,
+      "energyKcal": 98
+    }
+  },
+  {
+    "code": "D420-763000000-0001",
+    "name": "카페모카",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 9.64,
+      "proteinG": 1.9,
+      "fatG": 1.9,
+      "energyKcal": 63
+    }
+  },
+  {
+    "code": "D320-748100000-0002",
+    "name": "커피_카라멜마끼아토",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 10.49,
+      "proteinG": 2.26,
+      "fatG": 1.96,
+      "energyKcal": 69
+    }
+  },
+  {
+    "code": "D320-732000000-0001",
+    "name": "밀크티/버블티",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 11.12,
+      "proteinG": 0.98,
+      "fatG": 2.08,
+      "energyKcal": 67
+    }
+  },
+  {
+    "code": "D320-730000000-0001",
+    "name": "미숫가루",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 10.98,
+      "proteinG": 3.59,
+      "fatG": 2,
+      "energyKcal": 76
+    }
+  },
+  {
+    "code": "D420-761000000-0001",
+    "name": "율무차",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 11.85,
+      "proteinG": 0.9,
+      "fatG": 1.72,
+      "energyKcal": 66
+    }
+  },
+  {
+    "code": "D420-756000000-0001",
+    "name": "딸기바나나 스무디",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 11.75,
+      "proteinG": 1.1,
+      "fatG": 0.68,
+      "energyKcal": 54
+    }
+  },
+  {
+    "code": "D320-716000000-0001",
+    "name": "과ㆍ채주스",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 6.77,
+      "proteinG": 0.28,
+      "fatG": 0.25,
+      "energyKcal": 30
+    }
+  },
+  {
+    "code": "D220-721000000-0033",
+    "name": "녹차_녹차 핫(HOT)",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 0,
+      "proteinG": 0.03,
+      "fatG": 0,
+      "energyKcal": 0
+    }
+  },
+  {
+    "code": "D220-753000000-0083",
+    "name": "홍차_얼그레이 핫(HOT)",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 0.01,
+      "proteinG": 0.01,
+      "fatG": 0.02,
+      "energyKcal": 0
+    }
+  },
+  {
+    "code": "D220-745000000-0060",
+    "name": "유자차_유자차 핫(HOT)",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 12.06,
+      "proteinG": 0.05,
+      "fatG": 0,
+      "energyKcal": 48
+    }
+  },
+  {
+    "code": "D220-724000000-0044",
+    "name": "레몬차_레몬티",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 10.14,
+      "proteinG": 0,
+      "fatG": 0,
+      "energyKcal": 41
+    }
+  },
+  {
+    "code": "D220-746000000-0053",
+    "name": "자몽차_자몽티",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 10.03,
+      "proteinG": 0,
+      "fatG": 0,
+      "energyKcal": 41
+    }
+  },
+  {
+    "code": "D220-752000000-0185",
+    "name": "허브차_허브티 핫(HOT)",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 0,
+      "proteinG": 0,
+      "fatG": 0,
+      "energyKcal": 0
+    }
+  },
+  {
+    "code": "D220-743000000-0005",
+    "name": "오미자차_문경오미자티 핫(HOT)",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 11.94,
+      "proteinG": 0.01,
+      "fatG": 0,
+      "energyKcal": 50
+    }
+  },
+  {
+    "code": "D220-742000000-0204",
+    "name": "에이드_레몬 에이드",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 6.56,
+      "proteinG": 0.05,
+      "fatG": 0,
+      "energyKcal": 26
+    }
+  },
+  {
+    "code": "D220-738000000-0007",
+    "name": "식혜_얼음동동 식혜",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 10.82,
+      "proteinG": 0.11,
+      "fatG": 0.04,
+      "energyKcal": 44
+    }
+  },
+  {
+    "code": "D320-740000000-0001",
+    "name": "아이스티",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 12.05,
+      "proteinG": 0.06,
+      "fatG": 0.1,
+      "energyKcal": 49
+    }
+  },
+  {
+    "code": "D220-737000000-0774",
+    "name": "스무디_망고스무디",
+    "unit": "ML",
+    "nutrientsPer100": {
+      "carbohydrateG": 20.14,
+      "proteinG": 0.71,
+      "fatG": 0.95,
+      "energyKcal": 92
+    }
+  }
+]
