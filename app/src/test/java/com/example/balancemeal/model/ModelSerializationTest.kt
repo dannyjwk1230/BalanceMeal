@@ -40,7 +40,7 @@ class ModelSerializationTest {
         assertEquals("2024-02-29", fields.getValue("date").jsonPrimitive.content)
         assertEquals("12:34:56.123456789", fields.getValue("time").jsonPrimitive.content)
         assertEquals(
-            setOf("recordId", "date", "time", "mealType", "photoReference", "items"),
+            setOf("recordId", "date", "time", "mealType", "photoReferences", "items"),
             fields.keys
         )
         assertEquals(record, Json.decodeFromString<MealRecord>(encoded))

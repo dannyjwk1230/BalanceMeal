@@ -16,6 +16,13 @@ data class MealRecord(
     @Serializable(with = LocalTimeIsoSerializer::class)
     val time: LocalTime,
     val mealType: MealType,
-    val photoReference: String? = null,
+    val photoReferences: List<String> = emptyList(),
     val items: List<MealItem>
-)
+) {
+    /** 사진 없는 기록은 빈 목록이며 대표 사진은 첫 항목입니다. */
+    val photoReference: String? get() = photoReferences.firstOrNull()
+
+    constructor(recordId: String = UUID.randomUUID().toString(), date: LocalDate, time: LocalTime,
+        mealType: MealType, photoReference: String?, items: List<MealItem>) :
+        this(recordId, date, time, mealType, listOfNotNull(photoReference), items)
+}

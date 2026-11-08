@@ -41,7 +41,7 @@ class LocalMealRepositoryInstrumentedTest {
             }.awaitAll()
             val loaded = LocalMealRepository(file)
             loaded.initialize()
-            assertEquals(10, loaded.observeRecords().first().size)
+            assertEquals(1, loaded.observeRecords().first().size)
             assertEquals(repository.observeRecords().first(), loaded.observeRecords().first())
             val application = context.applicationContext as BalanceMealApplication
             assertSame(application.appContainer, application.appContainer)

@@ -58,7 +58,7 @@ class SaveMealInstrumentedTest {
                     vm.uiState.value.recordReadState == OperationState.Success
             }
             compose.onNodeWithText("식사 저장").performScrollTo().performClick()
-            assertTrue("photo" in vm.uiState.value.inputErrors)
+            assertFalse("photo" in vm.uiState.value.inputErrors)
             assertTrue("items" in vm.uiState.value.inputErrors)
             assertFalse(recordsFile.exists())
 
@@ -89,9 +89,21 @@ class SaveMealInstrumentedTest {
             val after = vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST)
             assertEquals(before.date, after.date)
             assertEquals(before.time, after.time)
-            assertNull(after.photoReference)
-            assertTrue(after.items.isEmpty())
+            assertEquals(record.photoReference, after.photoReference)
+            assertEquals(before.items, after.items)
             assertEquals(other, vm.uiState.value.draftsByMealType.getValue(MealType.LUNCH))
+            compose.onNodeWithText("변경사항 저장").performScrollTo().performClick()
+            compose.waitUntil(10_000) { vm.uiState.value.saveState == OperationState.Success }
+            compose.runOnIdle { vm.onEvent(MealEvent.SetTime(java.time.LocalTime.of(11, 45))) }
+            compose.onNodeWithText("변경사항 저장").performScrollTo().performClick()
+            compose.waitUntil(10_000) { vm.uiState.value.saveState == OperationState.Success }
+            val again = runBlocking {
+                LocalMealRepository(recordsFile).also { it.initialize() }.observeRecords().first()
+            }
+            assertEquals(1, again.size)
+            assertEquals(record.recordId, again.single().recordId)
+            assertEquals(java.time.LocalTime.of(11, 45), again.single().time)
+            assertEquals(1, File(directory, "images").listFiles()!!.size)
         } finally {
             instrumentation.runOnMainSync { store.clear() }
             directory.deleteRecursively()

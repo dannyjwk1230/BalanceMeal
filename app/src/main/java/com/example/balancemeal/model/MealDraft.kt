@@ -12,6 +12,12 @@ data class MealDraft(
     val date: LocalDate,
     @Serializable(with = LocalTimeIsoSerializer::class)
     val time: LocalTime,
-    val photoReference: String? = null,
+    val photoReferences: List<String> = emptyList(),
     val items: List<MealItemDraft> = emptyList()
-)
+) {
+    /** 이전 단일 사진 호출부를 위한 읽기 전용 호환 접근자입니다. */
+    val photoReference: String? get() = photoReferences.firstOrNull()
+
+    constructor(date: LocalDate, time: LocalTime, photoReference: String?, items: List<MealItemDraft> = emptyList()) :
+        this(date, time, listOfNotNull(photoReference), items)
+}

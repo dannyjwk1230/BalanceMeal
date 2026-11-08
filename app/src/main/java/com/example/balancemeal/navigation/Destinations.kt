@@ -9,7 +9,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object Analysis : NavKey
 @Serializable data class FoodSelection(
     val mealType: com.example.balancemeal.model.MealType,
-    val itemId: String
+    val itemId: String,
+    val date: String? = null
 ) : NavKey
 @Serializable data class MealDetail(val recordId: String) : NavKey
 @Serializable data object DataSources : NavKey

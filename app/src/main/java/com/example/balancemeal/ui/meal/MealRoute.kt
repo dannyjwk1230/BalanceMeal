@@ -22,7 +22,7 @@ import com.example.balancemeal.ui.screens.sources.DataSourcesScreen
 fun MealAppRoute(container: AppContainer) {
     // NavDisplay 엔트리 밖의 Activity 소유자로 생성합니다. 모든 목적지에 같은 VM을 전달합니다.
     val sharedViewModel: MealViewModel = viewModel(factory = container.mealViewModelFactory)
-    BalanceMealApp { key, navigate, onBack ->
+    BalanceMealApp(onRecordEntered = { sharedViewModel.onEvent(MealEvent.EnterRecord) }) { key, navigate, onBack ->
         MealRoute(key, sharedViewModel, navigate, onBack)
     }
 }
@@ -35,6 +35,15 @@ fun MealRoute(
     onBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(destination) {
+        if (destination == Record) {
+            viewModel.onEvent(MealEvent.EnsureRecordInitialized)
+            while (true) {
+                viewModel.onEvent(MealEvent.RefreshTime)
+                kotlinx.coroutines.delay(15_000)
+            }
+        }
+    }
     MealDestinationScreen(destination, state, viewModel::onEvent, navigate, onBack)
 }
 
@@ -49,18 +58,19 @@ fun MealDestinationScreen(
 ) {
     when (destination) {
         Home -> HomeScreen(state, onEvent, { navigate(Record) }, { navigate(DataSources) })
-        Record -> RecordScreen(state, onEvent, { itemId -> navigate(FoodSelection(state.currentMeal, itemId)) })
+        Record -> RecordScreen(state, onEvent, { itemId -> navigate(FoodSelection(state.currentMeal, itemId, state.selectedDate?.toString())) })
         History -> HistoryScreen(state, onEvent, { navigate(MealDetail(it)) })
         Analysis -> AnalysisScreen(state, onEvent)
         is FoodSelection -> {
-            var query by rememberSaveable(destination.mealType, destination.itemId) { mutableStateOf("") }
-            val targetAvailable = state.draftsByMealType[destination.mealType]?.items
+            var query by rememberSaveable(destination.date, destination.mealType, destination.itemId) { mutableStateOf("") }
+            val targetAvailable = state.draftsByKey[com.example.balancemeal.model.MealKey(
+                destination.date?.let(java.time.LocalDate::parse) ?: state.selectedDate!!, destination.mealType)]?.items
                 ?.any { it.itemId == destination.itemId } == true
             FoodSelectionScreen(
                 state = state, query = query, onQueryChange = { query = it },
                 targetAvailable = targetAvailable,
                 onSelectFood = { code ->
-                    onEvent(MealEvent.SelectFood(destination.itemId, code, destination.mealType))
+                    onEvent(MealEvent.SelectFood(destination.itemId, code, destination.mealType, destination.date?.let(java.time.LocalDate::parse)))
                     onBack()
                 },
                 onEvent = onEvent, onBack = onBack

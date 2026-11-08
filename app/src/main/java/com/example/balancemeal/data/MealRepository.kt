@@ -10,6 +10,9 @@ interface MealRepository {
     /** 초기화 성공 전에는 방출하지 않습니다. 빈 목록은 성공적으로 읽은 빈 상태입니다. */
     fun observeRecords(): Flow<List<MealRecord>>
 
-    /** 초기화 성공 후에만 저장합니다. 같은 recordId는 갱신하고 새 ID는 추가합니다. */
+    /** 초기화 성공 후에만 저장합니다. 날짜·끼니별 생성/갱신 시 기존 ID를 유지합니다. 기존 중복은 오류로 전달하고 보존합니다. */
     suspend fun saveMeal(record: MealRecord)
+
+    /** 초기화 성공 후에만 삭제합니다. 해당 recordId가 없으면 조용히 성공합니다. */
+    suspend fun deleteMeal(recordId: String)
 }

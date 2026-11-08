@@ -71,7 +71,7 @@ class MealViewModelTest {
         assertNotNull(state.sourceInfo)
         assertEquals(4, state.draftsByMealType.size)
         assertTrue(state.draftsByMealType.values.all {
-            it.date == LocalDate.of(2026, 11, 8) && it.time == LocalTime.of(12, 30)
+            it.date == LocalDate.of(2026, 11, 8)
         })
     }
 
@@ -167,7 +167,7 @@ class MealViewModelTest {
         assertEquals(meals.attempts[0].recordId, meals.attempts[1].recordId)
         assertEquals(OperationState.Success, vm.uiState.value.saveState)
         assertEquals(1, vm.uiState.value.records.size)
-        assertTrue(vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.isEmpty())
+        assertTrue(vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.isNotEmpty())
         assertEquals(1, foods.foodCalls)
         assertEquals(1, meals.initializeCalls)
     }
@@ -186,7 +186,7 @@ class MealViewModelTest {
         vm.onEvent(MealEvent.SetAmount(id, "200"))
         vm.onEvent(MealEvent.RemoveItem(id))
         vm.onEvent(MealEvent.AddItem)
-        vm.onEvent(MealEvent.SetDate(LocalDate.of(2020, 1, 1)))
+        vm.onEvent(MealEvent.SetPhoto("changed", MealType.BREAKFAST, original.date))
         vm.onEvent(MealEvent.SetPhoto("changed", MealType.BREAKFAST))
         assertEquals(original, vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST))
         vm.onEvent(MealEvent.SelectMeal(MealType.LUNCH))
@@ -199,8 +199,8 @@ class MealViewModelTest {
         val cleared = vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST)
         assertEquals(original.date, cleared.date)
         assertEquals(original.time, cleared.time)
-        assertNull(cleared.photoReference)
-        assertTrue(cleared.items.isEmpty())
+        assertEquals("file:///test/photo-1", cleared.photoReference)
+        assertEquals(original.items, cleared.items)
         assertEquals(lunch, vm.uiState.value.draftsByMealType.getValue(MealType.LUNCH))
         assertNull(vm.uiState.value.savingMealType)
         assertEquals("file:///test/photo-1", vm.uiState.value.records.single().photoReference)
@@ -214,10 +214,11 @@ class MealViewModelTest {
         vm.onEvent(MealEvent.SetDate(LocalDate.of(2026, 10, 20)))
         vm.onEvent(MealEvent.SetTime(LocalTime.of(7, 45)))
         vm.onEvent(MealEvent.SelectMeal(MealType.LUNCH))
-        assertEquals(LocalDate.of(2026, 11, 8), vm.uiState.value.draftsByMealType.getValue(MealType.LUNCH).date)
+        assertEquals(LocalDate.of(2026, 10, 20), vm.uiState.value.draftsByMealType.getValue(MealType.LUNCH).date)
         vm.onEvent(MealEvent.SetDate(LocalDate.of(2026, 11, 1)))
         vm.onEvent(MealEvent.SetTime(LocalTime.of(13, 10)))
         vm.onEvent(MealEvent.SelectMeal(MealType.BREAKFAST))
+        vm.onEvent(MealEvent.SetDate(LocalDate.of(2026, 10, 20)))
         assertEquals(LocalDate.of(2026, 10, 20), vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).date)
         assertEquals(LocalTime.of(7, 45), vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).time)
         assertEquals(home, vm.uiState.value.homeDate)
@@ -231,7 +232,7 @@ class MealViewModelTest {
         val vm = MealViewModel(foods, meals, zoneClock, photoStorage).also { store.put("meal", it) }
         runCurrent()
         assertTrue(vm.uiState.value.draftsByMealType.values.all {
-            it.date == LocalDate.of(2026, 11, 8) && it.time == LocalTime.of(8, 30)
+            it.date == LocalDate.of(2026, 11, 8)
         })
         assertEquals(LocalDate.of(2026, 11, 8), vm.uiState.value.homeDate)
     }
@@ -306,6 +307,14 @@ class MealViewModelTest {
         vm.onEvent(MealEvent.SetAmount(id, "33.333"))
         val valid = vm.uiState.value.nutritionPreview
         assertEquals(0.33333, valid.total!!.carbohydrateG, 0.000000001)
+        // 유효한 미리보기가 있어도 잘못된 입력으로 바꾸면 이전 수치를 즉시 제거합니다.
+        for (input in listOf("", "문자", "0", "-1", "NaN", "Infinity")) {
+            vm.onEvent(MealEvent.SetAmount(id, input))
+            assertNull(vm.uiState.value.nutritionPreview.total)
+            assertFalse(id in vm.uiState.value.nutritionPreview.byItemId)
+        }
+        vm.onEvent(MealEvent.SetAmount(id, "33.333"))
+        assertEquals(valid, vm.uiState.value.nutritionPreview)
         vm.onEvent(MealEvent.AddItem)
         assertEquals(valid.byItemId, vm.uiState.value.nutritionPreview.byItemId)
         assertNull(vm.uiState.value.nutritionPreview.total)
@@ -350,7 +359,7 @@ class MealViewModelTest {
         val vm = viewModel()
         runCurrent()
         vm.saveMeal()
-        assertTrue("photo" in vm.uiState.value.inputErrors)
+        assertFalse("photo" in vm.uiState.value.inputErrors)
         assertTrue("items" in vm.uiState.value.inputErrors)
         fillDraft(vm)
         vm.onEvent(MealEvent.AddItem)
@@ -411,6 +420,256 @@ class MealViewModelTest {
         assertTrue(vm.uiState.value.records.isEmpty())
     }
 
+    @Test fun saveReloadModifyAndRepeatSaveKeepIdFormAndRecordCount() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+        val row = fillDraft(vm)
+        vm.saveMeal()
+        runCurrent()
+        val first = vm.uiState.value.records.single()
+        assertEquals(first.recordId, vm.uiState.value.editingRecordId)
+        val before = vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST)
+        repeat(3) { vm.saveMeal(); runCurrent() }
+        assertEquals(1, vm.uiState.value.records.size)
+        assertEquals(1, photoCopies)
+        assertEquals(first.recordId, vm.uiState.value.records.single().recordId)
+        val restored = viewModel()
+        runCurrent()
+        assertEquals(first.recordId, restored.uiState.value.editingRecordId)
+        assertEquals(before, restored.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST))
+        restored.onEvent(MealEvent.SetTime(LocalTime.of(11, 15)))
+        restored.onEvent(MealEvent.SetAmount(row, "250"))
+        restored.saveMeal()
+        runCurrent()
+        val updated = restored.uiState.value.records.single()
+        assertEquals(first.recordId, updated.recordId)
+        assertEquals(LocalTime.of(11, 15), updated.time)
+        assertEquals(250.0, updated.items.single().amount, 0.0)
+        meals.records.value = listOf(first)
+        runCurrent()
+        assertEquals("250", restored.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.single().amountInput)
+        assertEquals(LocalTime.of(11, 15), restored.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).time)
+        assertEquals(97.5, com.example.balancemeal.nutrition.calculateNutrients(
+            updated.items.single().food.nutrientsPer100, updated.items.single().amount)!!.energyKcal, 0.0)
+    }
+
+    @Test fun dateSelectionKeepsDirtyDraftsAndOldEmissionsCannotOverwriteNewTarget() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+        val row = fillDraft(vm)
+        vm.saveMeal()
+        runCurrent()
+        val first = vm.uiState.value.records.single()
+        val dateA = first.date
+        val dateB = dateA.minusDays(1)
+        vm.onEvent(MealEvent.SetAmount(row, "300"))
+        vm.onEvent(MealEvent.SetDate(dateB))
+        assertTrue(vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.isEmpty())
+        vm.onEvent(MealEvent.AddItem)
+        val otherRow = vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.single().itemId
+        vm.onEvent(MealEvent.SetAmount(otherRow, "77"))
+        meals.records.value = listOf(first.copy(time = LocalTime.of(1, 0)))
+        runCurrent()
+        assertEquals(dateB, vm.uiState.value.selectedDate)
+        assertEquals("77", vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.single().amountInput)
+        vm.onEvent(MealEvent.SetPhoto("old-picker-result", MealType.BREAKFAST, dateA))
+        assertNull(vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).photoReference)
+        vm.onEvent(MealEvent.SetDate(dateA))
+        assertEquals("300", vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.single().amountInput)
+        assertEquals("old-picker-result", vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).photoReference)
+        assertEquals(first.recordId, vm.uiState.value.editingRecordId)
+        assertEquals(dateA, meals.records.value.single().date)
+    }
+
+    @Test fun duplicateRecordsRemainVisibleAndCannotBeSavedAmbiguously() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+        fillDraft(vm)
+        vm.saveMeal()
+        runCurrent()
+        val first = vm.uiState.value.records.single()
+        meals.records.value = listOf(first, first.copy(recordId = "legacy-duplicate"))
+        runCurrent()
+        assertEquals(2, vm.uiState.value.records.size)
+        assertEquals(2, vm.uiState.value.duplicateMealKeys.values.single().size)
+        val calls = meals.saveCalls
+        vm.saveMeal()
+        runCurrent()
+        assertEquals(calls, meals.saveCalls)
+        assertTrue("records" in vm.uiState.value.inputErrors)
+    }
+
+    private class MovingClock(var value: Instant, private val appZone: ZoneId) : Clock() {
+        override fun getZone() = appZone
+        override fun withZone(zone: ZoneId): Clock = Clock.fixed(value, zone)
+        override fun instant() = value
+    }
+
+    @Test fun snackEntryRefreshesOnlyUntouchedEmptyNewDraftAndWeekNavigationDoesNotEdit() = runTest(dispatcher) {
+        val moving = MovingClock(Instant.parse("2026-06-01T01:10:00Z"), ZoneId.of("Asia/Seoul"))
+        val vm = MealViewModel(foods, meals, moving, photoStorage).also { store.put("meal", it) }
+        runCurrent()
+        vm.onEvent(MealEvent.EnterRecord)
+        vm.onEvent(MealEvent.SelectMeal(MealType.SNACK_DRINK))
+        assertEquals(LocalTime.of(10, 10), vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK).time)
+        moving.value = moving.value.plusSeconds(3600)
+        vm.onEvent(MealEvent.RefreshTime) // 재구성/복귀용 refresh는 새 진입이 아닙니다.
+        assertEquals(LocalTime.of(10, 10), vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK).time)
+        vm.onEvent(MealEvent.EnterRecord)
+        assertEquals(LocalTime.of(11, 10), vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK).time)
+        vm.onEvent(MealEvent.SetTime(LocalTime.of(9, 30)))
+        moving.value = moving.value.plusSeconds(3600)
+        vm.onEvent(MealEvent.EnterRecord)
+        assertEquals(LocalTime.of(9, 30), vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK).time)
+        val before = vm.uiState.value.draftsByKey
+        val date = vm.uiState.value.selectedDate
+        vm.onEvent(MealEvent.MoveWeek(-1))
+        assertEquals(date, vm.uiState.value.selectedDate)
+        assertEquals(before, vm.uiState.value.draftsByKey)
+        vm.onEvent(MealEvent.MoveWeek(1))
+        val currentWeek = vm.uiState.value.displayedWeekStart
+        vm.onEvent(MealEvent.MoveWeek(1))
+        assertEquals(currentWeek, vm.uiState.value.displayedWeekStart)
+        vm.onEvent(MealEvent.SetDate(date!!.plusDays(1)))
+        assertEquals(date, vm.uiState.value.selectedDate)
+        val anotherMonth = date.minusMonths(1)
+        vm.onEvent(MealEvent.SetDate(anotherMonth)) // 캘린더 날짜 적용과 동일한 이벤트
+        assertEquals(weekMonday(anotherMonth), vm.uiState.value.displayedWeekStart)
+        assertEquals(anotherMonth, vm.uiState.value.selectedDate)
+        vm.onEvent(MealEvent.SetDate(date))
+        assertEquals(weekMonday(date), vm.uiState.value.displayedWeekStart)
+        assertEquals(before.getValue(MealKey(date, MealType.SNACK_DRINK)),
+            vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK))
+    }
+
+    @Test fun saveRechecksClockRejectsFutureAndPreservesDefaultsAndSavedTimes() = runTest(dispatcher) {
+        val moving = MovingClock(Instant.parse("2026-11-07T22:00:00Z"), ZoneId.of("Asia/Seoul"))
+        val vm = MealViewModel(foods, meals, moving, photoStorage).also { store.put("meal", it) }
+        runCurrent()
+        vm.onEvent(MealEvent.EnterRecord)
+        val id = fillDraft(vm)
+        assertEquals(LocalTime.of(8, 0), vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).time)
+        assertNotNull(vm.uiState.value.timeValidationMessage)
+        vm.saveMeal()
+        runCurrent()
+        assertEquals(0, meals.saveCalls)
+        assertTrue("time" in vm.uiState.value.inputErrors)
+        moving.value = moving.value.plusSeconds(7200)
+        vm.saveMeal()
+        runCurrent()
+        assertEquals(1, meals.saveCalls)
+        val stored = vm.uiState.value.records.single()
+        val restored = MealViewModel(foods, meals, moving, photoStorage).also { store.put("meal", it) }
+        runCurrent()
+        restored.onEvent(MealEvent.EnterRecord)
+        assertEquals(stored.time, restored.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).time)
+        restored.onEvent(MealEvent.SetDate(stored.date.minusDays(1)))
+        restored.onEvent(MealEvent.SetTime(LocalTime.of(23, 59)))
+        assertNull(restored.uiState.value.timeValidationMessage)
+    }
+
+    @Test fun savedSnackTimeIsNotReplacedOnEntryAndBlankSnackUpdatesOnNextEntry() = runTest(dispatcher) {
+        val moving = MovingClock(Instant.parse("2026-11-08T04:00:00Z"), ZoneId.of("Asia/Seoul"))
+        meals.records.value = listOf(MealRecord("snack-id", LocalDate.of(2026, 11, 8),
+            LocalTime.of(9, 5), MealType.SNACK_DRINK, items = emptyList()))
+        val vm = MealViewModel(foods, meals, moving, photoStorage).also { store.put("meal", it) }
+        runCurrent()
+        vm.onEvent(MealEvent.EnterRecord)
+        vm.onEvent(MealEvent.SelectMeal(MealType.SNACK_DRINK))
+        assertEquals(LocalTime.of(9, 5), vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK).time)
+        vm.onEvent(MealEvent.SetDate(LocalDate.of(2026, 11, 7)))
+        assertEquals(LocalTime.of(13, 0), vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK).time)
+        moving.value = moving.value.plusSeconds(1800)
+        vm.onEvent(MealEvent.EnterRecord)
+        assertEquals(LocalTime.of(13, 30), vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK).time)
+        vm.onEvent(MealEvent.SetDate(LocalDate.of(2026, 11, 8)))
+        assertEquals(LocalTime.of(9, 5), vm.uiState.value.draftsByMealType.getValue(MealType.SNACK_DRINK).time)
+    }
+
+    @Test fun multiPhotoRepositoryFailureCleansAllNewCopiesButKeepsExistingReferences() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+        fillDraft(vm)
+        vm.saveMeal()
+        runCurrent()
+        val existing = vm.uiState.value.records.single()
+        val date = existing.date
+        vm.onEvent(MealEvent.AddPhotos(listOf("content://second", "content://third"), MealType.BREAKFAST, date))
+        val before = vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST)
+        meals.failSave = true
+        val gate = CompletableDeferred<Unit>()
+        meals.saveGate = gate
+        vm.saveMeal()
+        vm.saveMeal()
+        runCurrent()
+        vm.onEvent(MealEvent.RemovePhoto(before.photoReferences.first(), MealType.BREAKFAST, date))
+        vm.onEvent(MealEvent.AddPhotos(listOf("content://locked"), MealType.BREAKFAST, date))
+        assertEquals(before, vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST))
+        gate.complete(Unit)
+        runCurrent()
+        assertTrue(vm.uiState.value.saveState is OperationState.Error)
+        assertEquals(before, vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST))
+        assertEquals(existing, vm.uiState.value.records.single())
+        assertEquals(listOf("file:///test/photo-2", "file:///test/photo-3"), deletedPhotos)
+        assertEquals(2, meals.saveCalls)
+    }
+
+    @Test fun saveMealWhenAllItemsRemovedDeletesExistingRecord() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+        fillDraft(vm)
+        vm.saveMeal()
+        runCurrent()
+        assertEquals(1, vm.uiState.value.records.size)
+        val recordId = vm.uiState.value.records.single().recordId
+        assertEquals(recordId, vm.uiState.value.editingRecordId)
+
+        val itemId = vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.single().itemId
+        vm.onEvent(MealEvent.RemoveItem(itemId))
+        assertTrue(vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.isEmpty())
+
+        vm.saveMeal()
+        runCurrent()
+        assertEquals(1, meals.deleteCalls)
+        assertTrue(vm.uiState.value.records.isEmpty())
+        assertNull(vm.uiState.value.editingRecordId)
+        assertEquals(OperationState.Success, vm.uiState.value.saveState)
+        assertTrue(vm.uiState.value.inputErrors.isEmpty())
+    }
+
+    @Test fun saveMealWhenNewDraftHasNoItemsShowsErrorAndDoesNotDelete() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+        vm.saveMeal()
+        runCurrent()
+        assertEquals(0, meals.deleteCalls)
+        assertEquals(0, meals.saveCalls)
+        assertTrue("items" in vm.uiState.value.inputErrors)
+    }
+
+    @Test fun failedDeleteCanBeRetriedWithRetrySave() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+        fillDraft(vm)
+        vm.saveMeal()
+        runCurrent()
+        val itemId = vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.single().itemId
+        vm.onEvent(MealEvent.RemoveItem(itemId))
+        meals.failDelete = true
+        vm.saveMeal()
+        runCurrent()
+        assertTrue(vm.uiState.value.saveState is OperationState.Error)
+        assertEquals(1, meals.deleteCalls)
+        assertEquals(1, vm.uiState.value.records.size)
+
+        meals.failDelete = false
+        vm.onEvent(MealEvent.RetrySave)
+        runCurrent()
+        assertEquals(2, meals.deleteCalls)
+        assertTrue(vm.uiState.value.records.isEmpty())
+        assertEquals(OperationState.Success, vm.uiState.value.saveState)
+    }
+
     private inner class FakeFoods : FoodRepository {
         var availableFoods = listOf(food)
         var foodCalls = 0
@@ -437,7 +696,9 @@ class MealViewModelTest {
         var saveCalls = 0
         var failInitialize = false
         var failSave = false
+        var failDelete = false
         var saveGate: CompletableDeferred<Unit>? = null
+        var deleteCalls = 0
         override suspend fun initialize() {
             initializeCalls++
             if (failInitialize) throw IOException("read failed")
@@ -452,6 +713,11 @@ class MealViewModelTest {
             saveGate?.await()
             if (failSave) throw IOException("save failed")
             records.value = records.value.filterNot { it.recordId == record.recordId } + record
+        }
+        override suspend fun deleteMeal(recordId: String) {
+            deleteCalls++
+            if (failDelete) throw IOException("delete failed")
+            records.value = records.value.filterNot { it.recordId == recordId }
         }
     }
 }

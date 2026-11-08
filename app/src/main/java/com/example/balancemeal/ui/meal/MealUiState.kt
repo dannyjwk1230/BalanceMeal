@@ -15,6 +15,15 @@ data class MealUiState(
     val records: List<MealRecord> = emptyList(),
     /** 홈 조회 전용이며 식사 입력 날짜와 독립적입니다. */
     val homeDate: java.time.LocalDate? = null,
+    val today: java.time.LocalDate? = null,
+    val displayedWeekStart: java.time.LocalDate? = null,
+    val timeValidationMessage: String? = null,
+    val selectedDate: java.time.LocalDate? = null,
+    val draftsByKey: Map<MealKey, MealDraft> = emptyMap(),
+    val dirtyMealKeys: Set<MealKey> = emptySet(),
+    val duplicateMealKeys: Map<MealKey, List<String>> = emptyMap(),
+    val editingRecordId: String? = null,
+    val savingMealKey: MealKey? = null,
     val currentMeal: MealType = MealType.BREAKFAST,
     val draftsByMealType: Map<MealType, MealDraft> = emptyMap(),
     /** 행 오류의 키는 itemId, 초안 전체 오류는 items/records입니다. */

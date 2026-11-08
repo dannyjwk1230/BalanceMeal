@@ -25,15 +25,18 @@ class MealViewModel(
     private val photoStorage: com.example.balancemeal.data.PhotoStorage
 ) : ViewModel() {
     private val now = LocalDateTime.now(clock)
+    private var entryTime = java.time.LocalTime.MIDNIGHT
+    private var hasEnteredRecord = false
     private val mutableUiState = MutableStateFlow(
-        MealUiState(homeDate = now.toLocalDate(), draftsByMealType = MealType.entries.associateWith {
-            MealDraft(date = now.toLocalDate(), time = now.toLocalTime())
+        MealUiState(homeDate = now.toLocalDate(), selectedDate = now.toLocalDate(), draftsByMealType = MealType.entries.associateWith {
+            MealDraft(date = now.toLocalDate(), time = defaultMealTime(it, entryTime))
         })
     )
     val uiState = mutableUiState.asStateFlow()
 
     private data class PendingSave(val recordId: String, val meal: MealType, val draft: MealDraft)
     private var pendingSave: PendingSave? = null
+    private var pendingDeleteId: String? = null
 
     init {
         readFoods()
@@ -42,14 +45,28 @@ class MealViewModel(
 
     fun onEvent(event: MealEvent) {
         when (event) {
-            is MealEvent.SelectMeal -> updateState {
-                it.copy(currentMeal = event.mealType, inputErrors = emptyMap())
+            MealEvent.EnterRecord -> enterRecord()
+            MealEvent.EnsureRecordInitialized -> if (!hasEnteredRecord) enterRecord()
+            MealEvent.RefreshTime -> updateState { it }
+            is MealEvent.MoveWeek -> {
+                val today = LocalDateTime.now(clock).toLocalDate()
+                val next = (uiState.value.displayedWeekStart ?: weekMonday(today)).plusWeeks(event.weeks.toLong())
+                if (next <= weekMonday(today)) updateState { it.copy(displayedWeekStart = next) }
             }
+            is MealEvent.SelectMeal -> selectKey(uiState.value.selectedDate!!, event.mealType)
             is MealEvent.SetHomeDate -> updateState { it.copy(homeDate = event.date) }
-            is MealEvent.SetDate -> editDraft { it.copy(date = event.date) }
+            is MealEvent.SetDate -> selectKey(event.date, uiState.value.currentMeal, showSelectedWeek = true)
             is MealEvent.SetTime -> editDraft { it.copy(time = event.time) }
             is MealEvent.SetPhoto -> {
-                if (event.reference != null) editDraft(event.mealType) { it.copy(photoReference = event.reference) }
+                if (event.reference != null) editDraft(event.mealType, event.date ?: uiState.value.selectedDate!!) { it.copy(photoReferences = listOf(event.reference)) }
+            }
+            is MealEvent.AddPhotos -> {
+                if (event.references.isNotEmpty()) editDraft(event.mealType, event.date) {
+                    it.copy(photoReferences = (it.photoReferences + event.references).distinct())
+                }
+            }
+            is MealEvent.RemovePhoto -> editDraft(event.mealType, event.date) {
+                it.copy(photoReferences = it.photoReferences.filterNot { reference -> reference == event.reference })
             }
             MealEvent.AddItem -> {
                 val item = MealItemDraft()
@@ -57,10 +74,13 @@ class MealViewModel(
             }
             is MealEvent.SelectFood -> {
                 val food = uiState.value.foods.find { it.code == event.foodCode } ?: return
-                val target = uiState.value.draftsByMealType[event.mealType]?.items
+                val targetKey = event.date?.let { MealKey(it, event.mealType) }
+                    ?: uiState.value.draftsByKey.keys.find { key -> key.mealType == event.mealType &&
+                        uiState.value.draftsByKey[key]?.items?.any { it.itemId == event.itemId } == true } ?: return
+                val target = uiState.value.draftsByKey[targetKey]?.items
                     ?.find { it.itemId == event.itemId } ?: return
                 if (target.food?.code == food.code) return
-                editDraft(event.mealType) { draft -> draft.copy(items = draft.items.map {
+                editDraft(event.mealType, targetKey.date) { draft -> draft.copy(items = draft.items.map {
                     if (it.itemId == event.itemId) it.copy(food = food, amountInput = "") else it
                 }) }
             }
@@ -71,6 +91,7 @@ class MealViewModel(
                 draft.copy(items = draft.items.filterNot { it.itemId == event.itemId })
             }
             MealEvent.SaveCurrentMeal -> saveMeal()
+            MealEvent.DeleteCurrentMeal -> deleteMeal()
             MealEvent.RetryFoodReading ->
                 if (uiState.value.foodReadState is OperationState.Error) readFoods()
             MealEvent.RetryRecordReading ->
@@ -78,14 +99,37 @@ class MealViewModel(
             MealEvent.RetrySave ->
                 if (uiState.value.saveState is OperationState.Error &&
                     uiState.value.foodReadState == OperationState.Success &&
-                    uiState.value.recordReadState == OperationState.Success) pendingSave?.let(::save)
+                    uiState.value.recordReadState == OperationState.Success) {
+                    pendingSave?.let(::save) ?: pendingDeleteId?.let(::deleteMeal)
+                }
             MealEvent.ClearInputErrors -> updateState { it.copy(inputErrors = emptyMap()) }
         }
     }
 
     private fun updateState(transform: (MealUiState) -> MealUiState) {
+        val checkedNow = LocalDateTime.now(clock)
         mutableUiState.update { previous ->
-            val state = transform(previous)
+            val changed = transform(previous)
+            val date = changed.selectedDate ?: now.toLocalDate()
+            val conflicts = changed.records.groupBy { MealKey(it.date, it.mealType) }
+                .filterValues { it.size > 1 }.mapValues { it.value.map { record -> record.recordId } }
+            val drafts = changed.draftsByKey.toMutableMap()
+            MealType.entries.forEach { type ->
+                val key = MealKey(date, type)
+                if (key !in drafts) drafts[key] = draftFor(changed.records, key)
+            }
+            val state = changed.copy(
+                today = checkedNow.toLocalDate(),
+                displayedWeekStart = changed.displayedWeekStart ?: weekMonday(checkedNow.toLocalDate()),
+                timeValidationMessage = if (isFutureMeal(date, drafts.getValue(MealKey(date, changed.currentMeal)).time, checkedNow))
+                    "미래 시각에는 저장할 수 없습니다. 식사 시간을 수정해 주세요." else null,
+                draftsByKey = drafts,
+                draftsByMealType = MealType.entries.associateWith { drafts.getValue(MealKey(date, it)) },
+                duplicateMealKeys = conflicts,
+                editingRecordId = changed.records.singleOrNull {
+                    it.date == date && it.mealType == changed.currentMeal
+                }?.recordId
+            )
             val items = state.draftsByMealType[state.currentMeal]?.items.orEmpty()
             val rows = items.mapNotNull { item ->
                 val food = item.food ?: return@mapNotNull null
@@ -108,18 +152,62 @@ class MealViewModel(
 
     private fun editDraft(
         mealType: MealType = uiState.value.currentMeal,
+        date: java.time.LocalDate = uiState.value.selectedDate!!,
         transform: (MealDraft) -> MealDraft
     ) {
-        if (uiState.value.savingMealType == mealType) return
-        if (uiState.value.saveState is OperationState.Error) pendingSave = null
+        val key = MealKey(date, mealType)
+        if (uiState.value.savingMealKey == key) return
+        if (uiState.value.saveState is OperationState.Error) {
+            pendingSave = null
+            pendingDeleteId = null
+        }
         updateState { state ->
-            val draft = state.draftsByMealType.getValue(mealType)
+            val draft = state.draftsByKey[key] ?: draftFor(state.records, key)
             state.copy(
-                draftsByMealType = state.draftsByMealType + (mealType to transform(draft)),
+                draftsByKey = state.draftsByKey + (key to transform(draft)),
+                dirtyMealKeys = state.dirtyMealKeys + key,
                 inputErrors = emptyMap(),
-                saveState = if (state.saveState is OperationState.Error) OperationState.Idle else state.saveState
+                saveState = if (state.saveState == OperationState.Loading) state.saveState else OperationState.Idle
             )
         }
+    }
+
+    private fun draftFor(records: List<MealRecord>, key: MealKey): MealDraft {
+        val record = records.singleOrNull { it.date == key.date && it.mealType == key.mealType }
+        return record?.let {
+            MealDraft(it.date, it.time, it.photoReferences, it.items.map { item ->
+                MealItemDraft(item.itemId, item.food, item.amount.toString())
+            })
+        } ?: MealDraft(key.date, defaultMealTime(key.mealType, entryTime))
+    }
+
+    private fun enterRecord() {
+        val current = LocalDateTime.now(clock)
+        entryTime = current.toLocalTime().withSecond(0).withNano(0)
+        val first = !hasEnteredRecord
+        hasEnteredRecord = true
+        updateState { state ->
+            val drafts = state.draftsByKey.mapValues { (key, draft) ->
+                val saved = state.records.any { it.date == key.date && it.mealType == key.mealType }
+                if (key.mealType == MealType.SNACK_DRINK && key !in state.dirtyMealKeys &&
+                    key != state.savingMealKey && !saved && draft.items.isEmpty() && draft.photoReferences.isEmpty())
+                    draft.copy(time = entryTime) else draft
+            }
+            state.copy(
+                selectedDate = if (first) current.toLocalDate() else state.selectedDate,
+                displayedWeekStart = if (first) weekMonday(current.toLocalDate()) else state.displayedWeekStart,
+                draftsByKey = drafts
+            )
+        }
+    }
+
+    private fun selectKey(date: java.time.LocalDate, meal: MealType, showSelectedWeek: Boolean = false) {
+        if (date > LocalDateTime.now(clock).toLocalDate()) return
+        updateState { it.copy(
+            selectedDate = date, currentMeal = meal, inputErrors = emptyMap(),
+            displayedWeekStart = if (showSelectedWeek) weekMonday(date) else it.displayedWeekStart,
+            saveState = if (it.saveState == OperationState.Loading) it.saveState else OperationState.Idle
+        ) }
     }
 
     private fun readFoods() {
@@ -157,6 +245,12 @@ class MealViewModel(
                     updateState {
                         it.copy(
                             records = records, recordReadState = OperationState.Success,
+                            draftsByKey = it.draftsByKey.mapValues { (key, draft) ->
+                                if (key in it.dirtyMealKeys || key == it.savingMealKey ||
+                                    it.records.filter { old -> old.date == key.date && old.mealType == key.mealType } ==
+                                    records.filter { next -> next.date == key.date && next.mealType == key.mealType }) draft
+                                else draftFor(records, key)
+                            },
                             inputErrors = it.inputErrors - "records"
                         )
                     }
@@ -169,19 +263,31 @@ class MealViewModel(
         }
     }
 
-    /** 검증부터 사진 보관과 기록 저장까지 고정된 초안으로 처리합니다. */
+    /** 검증부터 사진 보관과 기록 저장까지 고정된 초안으로 처리합니다.
+     * 기존 기록이 있고 항목이 비어 있으면 삭제로 처리합니다. */
     fun saveMeal() {
         val state = uiState.value
         if (state.saveState == OperationState.Loading) return
         val draft = state.draftsByMealType.getValue(state.currentMeal)
+
+        // 기존 기록이 있고 항목을 모두 삭제한 경우 → 기록 삭제
+        if (draft.items.isEmpty() && state.editingRecordId != null) {
+            deleteMeal(state.editingRecordId)
+            return
+        }
+
+        val checkedNow = LocalDateTime.now(clock)
         val errors = buildMap {
+            if (isFutureMeal(draft.date, draft.time, checkedNow)) put("time", "미래 시각에는 저장할 수 없습니다. 식사 시간을 수정해 주세요.")
             if (state.foodReadState != OperationState.Success) {
                 put("foods", "음식 불러오기를 완료한 후 저장해 주세요.")
             }
             if (state.recordReadState != OperationState.Success) {
                 put("records", "기록 불러오기를 완료한 후 저장해 주세요.")
             }
-            if (draft.photoReference.isNullOrBlank()) put("photo", "사진을 선택해 주세요.")
+            if (MealKey(draft.date, state.currentMeal) in state.duplicateMealKeys) {
+                put("records", "동일 날짜·끼니의 중복 기록이 있어 수정할 수 없습니다. 기존 기록은 보존했습니다.")
+            }
             if (draft.items.isEmpty()) put("items", "음식을 추가해 주세요.")
             draft.items.forEach { item ->
                 val amount = item.amountInput.trim().toDoubleOrNull()
@@ -196,27 +302,67 @@ class MealViewModel(
         updateState { it.copy(inputErrors = errors) }
         if (errors.isNotEmpty()) return
         val pending = PendingSave(
-            UUID.randomUUID().toString(), state.currentMeal,
-            draft.copy(items = draft.items.toList())
+            state.editingRecordId ?: UUID.randomUUID().toString(), state.currentMeal,
+            draft.copy(items = draft.items.toList(), photoReferences = draft.photoReferences.toList())
         )
         pendingSave = pending
         save(pending)
     }
 
+    private fun deleteMeal(targetId: String? = uiState.value.editingRecordId) {
+        val recordId = targetId ?: return
+        val state = uiState.value
+        if (state.saveState == OperationState.Loading) return
+        val key = MealKey(state.selectedDate!!, state.currentMeal)
+        updateState { it.copy(saveState = OperationState.Loading, savingMealType = state.currentMeal, savingMealKey = key) }
+        viewModelScope.launch {
+            withContext(NonCancellable) {
+                try {
+                    mealRepository.deleteMeal(recordId)
+                    pendingDeleteId = null
+                    pendingSave = null
+                    // 삭제 후 해당 키의 초안을 기본값으로 초기화합니다.
+                    updateState { s ->
+                        s.copy(
+                            draftsByKey = s.draftsByKey - key,
+                            dirtyMealKeys = s.dirtyMealKeys - key,
+                            saveState = OperationState.Success,
+                            savingMealType = null,
+                            savingMealKey = null,
+                            inputErrors = emptyMap()
+                        )
+                    }
+                } catch (error: Exception) {
+                    pendingDeleteId = recordId
+                    updateState { it.copy(saveState = OperationState.Error(error), savingMealType = null, savingMealKey = null) }
+                }
+            }
+        }
+    }
+
     private fun save(pending: PendingSave) {
         if (uiState.value.saveState == OperationState.Loading) return
-        updateState { it.copy(saveState = OperationState.Loading, savingMealType = pending.meal) }
+        if (isFutureMeal(pending.draft.date, pending.draft.time, LocalDateTime.now(clock))) {
+            updateState { it.copy(inputErrors = it.inputErrors + ("time" to "미래 시각에는 저장할 수 없습니다.")) }
+            return
+        }
+        val key = MealKey(pending.draft.date, pending.meal)
+        updateState { it.copy(saveState = OperationState.Loading, savingMealType = pending.meal, savingMealKey = key) }
         viewModelScope.launch {
             // 파일 교체가 완료된 뒤 취소가 도착해 성공한 사진을 지우는 일을 방지합니다.
             withContext(NonCancellable) {
-                var createdPhoto: String? = null
+                val createdPhotos = mutableListOf<String>()
                 var recordSaved = false
                 try {
-                    createdPhoto = photoStorage.copyPhoto(checkNotNull(pending.draft.photoReference))
+                    val existingPhotos = uiState.value.records.flatMap { it.photoReferences }.toSet()
+                    val storedPhotos = pending.draft.photoReferences.distinct().map { source ->
+                        if (source.startsWith("file:") && source in existingPhotos) source
+                        else photoStorage.copyPhoto(source).also { createdPhotos += it }
+                    }
                     val record = MealRecord(
                         recordId = pending.recordId,
                         date = pending.draft.date, time = pending.draft.time, mealType = pending.meal,
-                        photoReference = createdPhoto,
+                        photoReferences = storedPhotos,
                         items = pending.draft.items.map {
                             MealItem(itemId = it.itemId, food = checkNotNull(it.food),
                                 amount = it.amountInput.trim().toDouble())
@@ -226,18 +372,19 @@ class MealViewModel(
                     recordSaved = true
                     updateState { state ->
                         state.copy(
-                            draftsByMealType = state.draftsByMealType + (pending.meal to
-                                pending.draft.copy(photoReference = null, items = emptyList())),
-                            saveState = OperationState.Success, savingMealType = null
+                            draftsByKey = state.draftsByKey + (key to pending.draft.copy(photoReferences = storedPhotos)),
+                            // 저장 후에도 세션의 입력 표현과 사진 참조를 늦은 조회 결과로 덮어쓰지 않습니다.
+                            dirtyMealKeys = state.dirtyMealKeys + key,
+                            saveState = OperationState.Success, savingMealType = null, savingMealKey = null
                         )
                     }
                     pendingSave = null
                 } catch (error: Exception) {
-                    createdPhoto?.takeUnless { recordSaved }?.let { reference ->
+                    if (!recordSaved) createdPhotos.forEach { reference ->
                         try { photoStorage.deletePhoto(reference) }
                         catch (cleanupError: Exception) { error.addSuppressed(cleanupError) }
                     }
-                    updateState { it.copy(saveState = OperationState.Error(error), savingMealType = null) }
+                    updateState { it.copy(saveState = OperationState.Error(error), savingMealType = null, savingMealKey = null) }
                 }
             }
         }

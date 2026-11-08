@@ -4,65 +4,59 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.example.balancemeal.model.MealType
+import com.example.balancemeal.ui.components.MealPhoto
 
 @Composable
 fun MealPhotoSection(
     mealType: MealType,
-    photoReference: String?,
+    photoReferences: List<String>,
     enabled: Boolean = true,
-    error: String? = null,
-    onPhotoSelected: (MealType, String) -> Unit
+    targetDate: String? = null,
+    onPhotoRemoved: (String) -> Unit = {},
+    onPhotoSelected: (MealType, List<String>, String?) -> Unit
 ) {
-    // 현재 끼니와 분리해 선택기를 열 당시의 대상을 Activity 재생성 중에도 보관합니다.
+    // 선택기를 연 날짜·끼니를 회전 후에도 유지합니다.
+    var pendingDate by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingMeal by rememberSaveable { mutableStateOf<String?>(null) }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         val target = pendingMeal
+        val date = pendingDate
         pendingMeal = null
-        if (uri != null && target != null) onPhotoSelected(MealType.valueOf(target), uri.toString())
-        // 취소(null)는 이벤트를 보내지 않아 기존 참조를 유지합니다.
+        pendingDate = null
+        if (uris.isNotEmpty() && target != null)
+            onPhotoSelected(MealType.valueOf(target), uris.map { it.toString() }.distinct(), date)
+        // 빈 결과(취소)는 기존 목록을 변경하지 않습니다.
     }
     OutlinedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("사진", style = MaterialTheme.typography.titleMedium)
-            if (photoReference == null) {
-                Text("식사 사진 한 장을 선택해 주세요.")
-            } else {
-                key(photoReference) {
-                    var loading by remember { mutableStateOf(true) }
-                    var failed by remember { mutableStateOf(false) }
-                    AsyncImage(
-                        model = photoReference,
-                        contentDescription = "식사 사진",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxWidth().height(200.dp).testTag("meal-photo"),
-                        onLoading = { loading = true; failed = false },
-                        onSuccess = { loading = false; failed = false },
-                        onError = { loading = false; failed = true }
-                    )
-                    if (loading) {
-                        CircularProgressIndicator()
-                        Text("사진을 불러오는 중입니다.")
+            Text("사진(선택)", style = MaterialTheme.typography.titleMedium)
+            Text("사진 없이도 저장할 수 있어요")
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(photoReferences, key = { it }) { reference ->
+                    Column(Modifier.width(160.dp)) {
+                        MealPhoto(reference)
+                        TextButton(onClick = { onPhotoRemoved(reference) }, enabled = enabled) {
+                            Text("사진 제거")
+                        }
                     }
-                    if (failed) Text("사진을 읽을 수 없습니다. 다시 선택해 주세요.")
                 }
             }
             Button(
                 enabled = enabled && pendingMeal == null,
                 onClick = {
                     pendingMeal = mealType.name
+                    pendingDate = targetDate
                     picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }
-            ) { Text(if (photoReference == null) "사진 선택" else "사진 다시 선택") }
-            if (error != null) Text(error, color = MaterialTheme.colorScheme.error)
+            ) { Text(if (photoReferences.isEmpty()) "사진 선택" else "사진 추가") }
         }
     }
 }

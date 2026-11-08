@@ -43,7 +43,7 @@ class PhotoFeaturesInstrumentedTest {
             val registry = object : ActivityResultRegistry() {
                 override fun <I, O> onLaunch(code: Int, contract: ActivityResultContract<I, O>,
                     input: I, options: ActivityOptionsCompat?) {
-                    assertTrue(contract is ActivityResultContracts.PickVisualMedia)
+                    assertTrue(contract is ActivityResultContracts.PickMultipleVisualMedia)
                     requestCode = code
                 }
             }
@@ -51,10 +51,10 @@ class PhotoFeaturesInstrumentedTest {
                 override val activityResultRegistry = registry
             }
             val meal = mutableStateOf(MealType.BREAKFAST)
-            val references = mutableStateOf<Map<MealType, String>>(emptyMap())
+            val references = mutableStateOf<Map<MealType, List<String>>>(emptyMap())
             compose.setContent {
                 CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
-                    MealPhotoSection(meal.value, references.value[meal.value]) { target, reference ->
+                    MealPhotoSection(meal.value, references.value[meal.value].orEmpty()) { target, reference, _ ->
                         references.value = references.value + (target to reference)
                     }
                 }
@@ -62,31 +62,31 @@ class PhotoFeaturesInstrumentedTest {
             compose.onNodeWithText("사진 선택").performClick()
             compose.runOnIdle {
                 meal.value = MealType.LUNCH
-                registry.dispatchResult(requestCode, Uri.fromFile(photo))
+                registry.dispatchResult(requestCode, listOf(Uri.fromFile(photo)))
             }
             assertNull(references.value[MealType.LUNCH])
-            assertEquals(Uri.fromFile(photo).toString(), references.value[MealType.BREAKFAST])
+            assertEquals(listOf(Uri.fromFile(photo).toString()), references.value[MealType.BREAKFAST])
             compose.runOnIdle { meal.value = MealType.BREAKFAST }
             compose.waitUntil(10_000) {
                 compose.onAllNodesWithText("사진을 불러오는 중입니다.").fetchSemanticsNodes().isEmpty()
             }
             compose.onNodeWithContentDescription("식사 사진").assertIsDisplayed()
             compose.onNodeWithText("사진을 읽을 수 없습니다. 다시 선택해 주세요.").assertDoesNotExist()
-            compose.onNodeWithText("사진 다시 선택").performClick()
+            compose.onNodeWithText("사진 추가").performClick()
             val before = references.value
-            compose.runOnIdle { registry.dispatchResult<Uri?>(requestCode, null) }
+            compose.runOnIdle { registry.dispatchResult(requestCode, emptyList<Uri>()) }
             assertEquals(before, references.value)
         } finally { photo.delete() }
     }
 
     @Test fun inaccessiblePhotoShowsReselectionMessage() {
         compose.setContent {
-            MealPhotoSection(MealType.BREAKFAST, "content://invalid.test/missing") { _, _ -> }
+            MealPhotoSection(MealType.BREAKFAST, listOf("content://invalid.test/missing")) { _, _, _ -> }
         }
         compose.waitUntil(10_000) {
             compose.onAllNodesWithText("사진을 읽을 수 없습니다. 다시 선택해 주세요.").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithText("사진 다시 선택").assertIsEnabled()
+        compose.onNodeWithText("사진 추가").assertIsEnabled()
     }
 
     @Test fun contentResolverCopyRemainsReadableAfterSourceRemoval() = runBlocking {

@@ -17,11 +17,19 @@ fun MealItemRow(
     enabled: Boolean = true,
     error: String?,
     nutrients: com.example.balancemeal.model.Nutrients?,
+    /** 넓은 화면에서 현재 오른쪽 패널로 선택 중인 항목임을 강조합니다. */
+    isHighlighted: Boolean = false,
     onSelectFood: () -> Unit,
     onAmountChange: (String) -> Unit,
     onDelete: () -> Unit
 ) {
-    OutlinedCard(Modifier.fillMaxWidth().testTag("meal-item-${item.itemId}")) {
+    val borderColor = if (isHighlighted) MaterialTheme.colorScheme.primary
+        else MaterialTheme.colorScheme.outline
+    val borderWidth = if (isHighlighted) 2.dp else 1.dp
+    OutlinedCard(
+        Modifier.fillMaxWidth().testTag("meal-item-${item.itemId}"),
+        border = androidx.compose.foundation.BorderStroke(borderWidth, borderColor)
+    ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
@@ -54,7 +62,10 @@ fun MealItemRow(
                 modifier = Modifier.fillMaxWidth().testTag("amount-${item.itemId}")
             )
             if (error != null) Text(error, color = MaterialTheme.colorScheme.error)
-            if (nutrients != null) NutrientsDisplay(nutrients)
+            if (nutrients != null) {
+                Text("이 음식의 영양 정보", style = MaterialTheme.typography.labelLarge)
+                NutrientsDisplay(nutrients)
+            }
             else Text("음식과 유효한 섭취량을 입력하면 영양소가 표시됩니다.")
         }
     }

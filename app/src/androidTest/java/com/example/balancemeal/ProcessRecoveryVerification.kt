@@ -52,6 +52,7 @@ class ProcessRecoveryVerification {
                 it.foodReadState == OperationState.Success && it.recordReadState == OperationState.Success
             } }
             instrumentation.runOnMainSync {
+                vm.onEvent(MealEvent.SetDate(java.time.LocalDate.now().minusDays(1)))
                 vm.onEvent(MealEvent.AddItem)
                 val id = vm.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).items.single().itemId
                 vm.onEvent(MealEvent.SelectFood(id, vm.uiState.value.foods.first().code, MealType.BREAKFAST))
@@ -99,8 +100,25 @@ class ProcessRecoveryVerification {
             val bitmap = BitmapFactory.decodeFile(photo.absolutePath)
             assertNotNull(bitmap)
             bitmap?.recycle()
-            assertTrue(vm.uiState.value.draftsByMealType.values.all { it.items.isEmpty() })
-            println("RECOVERY_VERIFIED previousPid=$previousPid pid=${Process.myPid()} records=1 photoDecoded=true")
+            instrumentation.runOnMainSync {
+                vm.onEvent(MealEvent.SetDate(record.date))
+                vm.onEvent(MealEvent.SelectMeal(record.mealType))
+            }
+            assertEquals(record.recordId, vm.uiState.value.editingRecordId)
+            assertEquals(record.items.size,
+                vm.uiState.value.draftsByMealType.getValue(record.mealType).items.size)
+            instrumentation.runOnMainSync {
+                vm.onEvent(MealEvent.SetTime(record.time.plusMinutes(1)))
+                repeat(3) { vm.saveMeal() }
+            }
+            withTimeout(10_000) { vm.uiState.first { it.saveState == OperationState.Success } }
+            val after = LocalMealRepository(File(root, "records.json"))
+            after.initialize()
+            val updated = after.observeRecords().first().single()
+            assertEquals(record.recordId, updated.recordId)
+            assertEquals(record.time.plusMinutes(1), updated.time)
+            assertEquals(1, File(root, "images").listFiles()!!.size)
+            println("RECOVERY_VERIFIED previousPid=$previousPid pid=${Process.myPid()} records=1 photoDecoded=true idPreservedAfterEdit=true")
         } finally {
             instrumentation.runOnMainSync { store.clear() }
             root.deleteRecursively()

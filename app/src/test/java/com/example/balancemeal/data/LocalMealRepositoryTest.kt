@@ -74,7 +74,7 @@ class LocalMealRepositoryTest {
         val repository = LocalMealRepository(file)
         repository.initialize()
         repository.saveMeal(record())
-        val updated = record().copy(mealType = MealType.DINNER)
+        val updated = record().copy(time = LocalTime.of(18, 15))
         repository.saveMeal(updated)
         val reloaded = LocalMealRepository(file)
         reloaded.initialize()
@@ -89,7 +89,7 @@ class LocalMealRepositoryTest {
         val file = file()
         val repository = LocalMealRepository(file)
         repository.initialize()
-        (1..40).map { id -> async { repository.saveMeal(record("record-$id")) } }.awaitAll()
+        (1..40).map { id -> async { repository.saveMeal(record("record-$id").copy(date = LocalDate.of(2026, 11, 8).plusDays(id.toLong()))) } }.awaitAll()
         val observed = repository.observeRecords().first()
         assertEquals(40, observed.size)
         assertEquals(40, observed.map { it.recordId }.toSet().size)
@@ -133,6 +133,48 @@ class LocalMealRepositoryTest {
         assertTrue(temporary.root.listFiles()!!.none { it.extension == "tmp" })
     }
 
+    @Test fun sameDateAndMealUpsertsAtomicallyAndKeepsFirstIdAcrossReloads() = runBlocking {
+        val file = file()
+        val repo = LocalMealRepository(file)
+        repo.initialize()
+        repo.saveMeal(record("original"))
+        (1..40).map { n -> async {
+            repo.saveMeal(record("new-$n").copy(time = LocalTime.of(14, n % 60)))
+        } }.awaitAll()
+        assertEquals(1, repo.observeRecords().first().size)
+        assertEquals("original", repo.observeRecords().first().single().recordId)
+        val reloaded = LocalMealRepository(file)
+        reloaded.initialize()
+        repeat(3) { reloaded.saveMeal(record("another").copy(time = LocalTime.of(18, 30))) }
+        assertEquals("original", reloaded.observeRecords().first().single().recordId)
+        assertEquals(1, reloaded.observeRecords().first().size)
+        val before = file.readBytes()
+        try {
+            reloaded.saveMeal(record("original").copy(date = LocalDate.of(2026, 11, 9)))
+            fail("Moving the old ID must be rejected")
+        } catch (_: IllegalArgumentException) { }
+        assertArrayEquals(before, file.readBytes())
+    }
+
+    @Test fun legacyDuplicateMealsAreReportedWithoutDeletingMergingOrRewriting() = runBlocking {
+        val file = file()
+        val legacy = listOf(record("legacy-a"), record("legacy-b"))
+        file.writeText(Json.encodeToString(legacy))
+        val bytes = file.readBytes()
+        val repo = LocalMealRepository(file)
+        repo.initialize()
+        assertEquals(legacy, repo.observeRecords().first())
+        try {
+            repo.saveMeal(record("new"))
+            fail("Ambiguous duplicates must not be overwritten")
+        } catch (error: IllegalStateException) {
+            assertTrue(error.message!!.contains("legacy-a"))
+            assertTrue(error.message!!.contains("legacy-b"))
+        }
+        assertArrayEquals(bytes, file.readBytes())
+        assertEquals(legacy, repo.observeRecords().first())
+    }
+
     @Test
     fun directoryReadErrorIsNotTreatedAsMissingFile() = runBlocking {
         val file = file()
@@ -171,5 +213,34 @@ class LocalMealRepositoryTest {
         val reloaded = LocalMealRepository(file)
         reloaded.initialize()
         assertEquals(listOf(meal), withTimeout(1000) { reloaded.observeRecords().first() })
+    }
+
+    @Test
+    fun deleteMealRemovesPersistedRecordAndEmitsUpdatedList() = runBlocking {
+        val file = file()
+        val repository = LocalMealRepository(file)
+        repository.initialize()
+        val meal = record()
+        repository.saveMeal(meal)
+        assertEquals(listOf(meal), repository.observeRecords().first())
+
+        repository.deleteMeal(meal.recordId)
+        assertEquals(emptyList<MealRecord>(), repository.observeRecords().first())
+
+        val reloaded = LocalMealRepository(file)
+        reloaded.initialize()
+        assertEquals(emptyList<MealRecord>(), withTimeout(1000) { reloaded.observeRecords().first() })
+    }
+
+    @Test
+    fun deleteNonExistentRecordSilentlySucceeds() = runBlocking {
+        val file = file()
+        val repository = LocalMealRepository(file)
+        repository.initialize()
+        val meal = record()
+        repository.saveMeal(meal)
+
+        repository.deleteMeal("non-existent-id")
+        assertEquals(listOf(meal), repository.observeRecords().first())
     }
 }

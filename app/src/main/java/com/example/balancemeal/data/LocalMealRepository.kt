@@ -22,7 +22,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.*
 
 class LocalMealRepository(
     private val file: File,
@@ -53,7 +53,20 @@ class LocalMealRepository(
     override suspend fun saveMeal(record: MealRecord): Unit = withContext(ioDispatcher) {
         mutex.withLock {
             val previous = checkNotNull(records.value) { "기록 초기화 성공 후에만 저장할 수 있습니다." }
-            val saved = record.copy(items = Collections.unmodifiableList(record.items.toList()))
+            val matches = previous.filter { it.date == record.date && it.mealType == record.mealType }
+            check(matches.size <= 1) {
+                "동일 날짜·끼니 중복 기록 ${matches.size}건: ${record.date} ${record.mealType} / " +
+                    matches.joinToString { it.recordId } + ". 기존 데이터는 변경하지 않았습니다."
+            }
+            val sameId = previous.find { it.recordId == record.recordId }
+            require(sameId == null || (sameId.date == record.date && sameId.mealType == record.mealType)) {
+                "기존 기록의 날짜·끼니를 이동할 수 없습니다."
+            }
+            val saved = record.copy(
+                recordId = matches.singleOrNull()?.recordId ?: record.recordId,
+                photoReferences = Collections.unmodifiableList(record.photoReferences.toList()),
+                items = Collections.unmodifiableList(record.items.toList())
+            )
             val index = previous.indexOfFirst { it.recordId == saved.recordId }
             val next = if (index < 0) previous + saved else previous.mapIndexed { i, old ->
                 if (i == index) saved else old
@@ -68,22 +81,44 @@ class LocalMealRepository(
         }
     }
 
+    override suspend fun deleteMeal(recordId: String): Unit = withContext(ioDispatcher) {
+        mutex.withLock {
+            val previous = checkNotNull(records.value) { "기록 초기화 성공 후에만 삭제할 수 있습니다." }
+            val next = previous.filter { it.recordId != recordId }
+            if (next.size == previous.size) return@withLock  // 없는 ID는 조용히 성공
+            val published = snapshot(next)
+            val content = json.encodeToString(published)
+            currentCoroutineContext().ensureActive()
+            writeAtomically(content)
+            records.value = published
+        }
+    }
+
     private fun decodeRecords(text: String): List<MealRecord> {
         // 모델의 UUID 기본값으로 손상된 파일의 누락 ID를 자동 생성하지 않습니다.
-        json.parseToJsonElement(text).jsonArray.forEach { entry ->
+        val migrated = JsonArray(json.parseToJsonElement(text).jsonArray.map { entry ->
             val fields = entry.jsonObject
             require("recordId" in fields) { "기록 파일에 recordId가 누락되었습니다." }
             fields.getValue("items").jsonArray.forEach { item ->
                 require("itemId" in item.jsonObject) { "기록 파일에 itemId가 누락되었습니다." }
             }
-        }
-        return json.decodeFromString<List<MealRecord>>(text).also(::validateRecords)
+            // 읽을 때만 변환합니다. 초기화는 기존 파일을 덮어쓰지 않습니다.
+            val legacy = fields["photoReference"]
+            require(legacy == null || legacy is JsonNull || (legacy is JsonPrimitive && legacy.isString)) {
+                "이전 사진 참조 형식이 잘못되었습니다."
+            }
+            val references = fields["photoReferences"]?.jsonArray.orEmpty() +
+                listOfNotNull(legacy?.takeUnless { it is JsonNull })
+            JsonObject(fields - "photoReference" + ("photoReferences" to JsonArray(references.distinct())))
+        })
+        return json.decodeFromJsonElement<List<MealRecord>>(migrated).also(::validateRecords)
     }
 
     private fun validateRecords(list: List<MealRecord>) {
         require(list.all { it.recordId.isNotBlank() }) { "recordId는 비어 있을 수 없습니다." }
         require(list.map { it.recordId }.toSet().size == list.size) { "recordId가 중복되었습니다." }
         list.forEach { record ->
+            require(record.photoReferences.all { it.isNotBlank() }) { "사진 참조는 비어 있을 수 없습니다." }
             require(record.items.all { it.itemId.isNotBlank() }) { "itemId는 비어 있을 수 없습니다." }
             require(record.items.map { it.itemId }.toSet().size == record.items.size) {
                 "한 기록에 중복된 itemId가 있습니다."
@@ -93,7 +128,8 @@ class LocalMealRepository(
 
     private fun snapshot(list: List<MealRecord>): List<MealRecord> =
         Collections.unmodifiableList(list.map {
-            it.copy(items = Collections.unmodifiableList(it.items.toList()))
+            it.copy(photoReferences = Collections.unmodifiableList(it.photoReferences.toList()),
+                items = Collections.unmodifiableList(it.items.toList()))
         })
 
     private fun writeAtomically(content: String) {

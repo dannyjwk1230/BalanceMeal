@@ -117,12 +117,12 @@ class SharedMealViewModelInstrumentedTest {
         compose.runOnIdle { shared.onEvent(MealEvent.SelectFood(id, rice.code, MealType.BREAKFAST)) }
         compose.onNodeWithText("기록으로 이동").performClick()
         compose.onNodeWithTag("amount-$id").performScrollTo().performTextInput("125")
-        val energy = String.format(java.util.Locale.getDefault(), "열량 %.1f kcal", 207.5)
+        val energy = String.format(java.util.Locale.getDefault(), "%.1f kcal", 207.5)
         compose.onAllNodesWithText(energy).assertCountEquals(2)
-        compose.onNodeWithText("식사 합계").assertExists()
+        compose.onNodeWithText("식사 전체 영양 합계").assertExists()
         assertEquals(46.6625, shared.uiState.value.nutritionPreview.total!!.carbohydrateG, 0.000000001)
         compose.onNodeWithText("음식·반찬 추가").performScrollTo().performClick()
-        compose.onNodeWithText("식사 합계").assertDoesNotExist()
+        compose.onNodeWithText("식사 전체 영양 합계").assertDoesNotExist()
         compose.onAllNodesWithText(energy).assertCountEquals(1)
         assertNull(shared.uiState.value.nutritionPreview.total)
     }
@@ -192,34 +192,31 @@ class SharedMealViewModelInstrumentedTest {
     }
 
     @Test
-    fun dateTimeDialogsUpdateSelectedMealAndKeepHomeDateSeparate() {
+    fun weeklyDateAndTimeInputsKeepMealDraftsSeparate() {
         lateinit var shared: MealViewModel
         compose.activityRule.scenario.onActivity { activity ->
-            val container = (activity.application as BalanceMealApplication).appContainer
-            shared = ViewModelProvider(activity, container.mealViewModelFactory)[MealViewModel::class.java]
-            shared.onEvent(MealEvent.SetDate(java.time.LocalDate.of(2026, 11, 8)))
-            shared.onEvent(MealEvent.SetTime(java.time.LocalTime.of(12, 30)))
+            shared = ViewModelProvider(activity,
+                (activity.application as BalanceMealApplication).appContainer.mealViewModelFactory)[MealViewModel::class.java]
         }
-        val homeDate = shared.uiState.value.homeDate
         compose.onNodeWithText("기록으로 이동").performClick()
-        compose.onNodeWithText("식사 날짜: 2026-11-08").performScrollTo().performClick()
-        compose.onNodeWithText("날짜 적용").assertIsDisplayed()
-        compose.onNodeWithText("November 15, 2026", substring = true).performClick()
-        compose.onNodeWithText("날짜 적용").performClick()
-        compose.onNodeWithText("식사 날짜: 2026-11-15").assertIsDisplayed()
-        compose.onNodeWithText("식사 시간: 12:30").performClick()
+        val today = shared.uiState.value.today!!
+        val yesterday = today.minusDays(1)
+        val homeDate = shared.uiState.value.homeDate
+        if (com.example.balancemeal.model.weekMonday(yesterday) != com.example.balancemeal.model.weekMonday(today)) {
+            compose.onNodeWithText("<").performClick()
+        }
+        compose.onNodeWithText("${yesterday.monthValue}/${yesterday.dayOfMonth}").performClick()
+        assertEquals(yesterday, shared.uiState.value.selectedDate)
+        val time = shared.uiState.value.draftsByMealType.getValue(MealType.BREAKFAST).time
+        compose.onNodeWithText("식사 시간: ${time.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))}").performClick()
         compose.onAllNodes(hasSetTextAction())[0].performTextReplacement("07")
         compose.onAllNodes(hasSetTextAction())[1].performTextReplacement("45")
         compose.onNodeWithText("시간 적용").performClick()
-        compose.onNodeWithText("식사 시간: 07:45").assertIsDisplayed()
         compose.onNodeWithText("중식").performClick()
         compose.onNodeWithText("조식").performClick()
-        compose.onNodeWithText("식사 날짜: 2026-11-15").assertIsDisplayed()
         compose.onNodeWithText("식사 시간: 07:45").assertIsDisplayed()
+        assertEquals(yesterday, shared.uiState.value.selectedDate)
         assertEquals(homeDate, shared.uiState.value.homeDate)
-        compose.onNodeWithText("식사 날짜: 2026-11-15").performClick()
-        compose.onNodeWithText("취소").performClick()
-        compose.onNodeWithText("식사 날짜: 2026-11-15").assertIsDisplayed()
     }
 
     @Test
