@@ -35,6 +35,7 @@ fun MealRoute(
     onBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val analysis by viewModel.analysisState.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(destination) {
         if (destination == Record) {
             viewModel.onEvent(MealEvent.EnsureRecordInitialized)
@@ -44,7 +45,7 @@ fun MealRoute(
             }
         }
     }
-    MealDestinationScreen(destination, state, viewModel::onEvent, navigate, onBack)
+    MealDestinationScreen(destination, state, viewModel::onEvent, navigate, onBack, analysis)
 }
 
 /** Screen에는 Repository나 ViewModel을 전달하지 않습니다. 프리뷰도 이 경계를 사용합니다. */
@@ -54,13 +55,14 @@ fun MealDestinationScreen(
     state: MealUiState,
     onEvent: (MealEvent) -> Unit,
     navigate: (NavKey) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    analysis: com.example.balancemeal.model.MealAnalysis = com.example.balancemeal.model.MealAnalysis()
 ) {
     when (destination) {
         Home -> HomeScreen(state, onEvent, { navigate(Record) }, { navigate(DataSources) })
         Record -> RecordScreen(state, onEvent, { itemId -> navigate(FoodSelection(state.currentMeal, itemId, state.selectedDate?.toString())) })
         History -> HistoryScreen(state, onEvent, { navigate(MealDetail(it)) })
-        Analysis -> AnalysisScreen(state, onEvent)
+        Analysis -> AnalysisScreen(state, analysis, onEvent)
         is FoodSelection -> {
             var query by rememberSaveable(destination.date, destination.mealType, destination.itemId) { mutableStateOf("") }
             val targetAvailable = state.draftsByKey[com.example.balancemeal.model.MealKey(
