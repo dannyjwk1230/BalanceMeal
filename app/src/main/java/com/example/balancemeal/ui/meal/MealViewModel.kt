@@ -13,6 +13,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -31,6 +33,51 @@ class MealViewModel(
         })
     )
     val uiState = mutableUiState.asStateFlow()
+    
+    val analysisState = uiState
+        .map { state ->
+            val thirtyDaysAgo = java.time.LocalDate.now(clock).minusDays(30)
+            val recentRecords = state.records.filter { !it.date.isBefore(thirtyDaysAgo) }
+            
+            var totalKcal = 0.0
+            val nutrientsMap = mutableMapOf<MealType, Nutrients>()
+            
+            for (record in recentRecords) {
+                var mealKcal = 0.0
+                var mealCarb = 0.0
+                var mealProtein = 0.0
+                var mealFat = 0.0
+                
+                for (item in record.items) {
+                    val nut = calculateNutrients(item.food.nutrientsPer100, item.amount)
+                    if (nut != null) {
+                        mealKcal += nut.energyKcal
+                        mealCarb += nut.carbohydrateG
+                        mealProtein += nut.proteinG
+                        mealFat += nut.fatG
+                    }
+                }
+                
+                totalKcal += mealKcal
+                val existing = nutrientsMap[record.mealType] ?: Nutrients(0.0, 0.0, 0.0, 0.0)
+                nutrientsMap[record.mealType] = Nutrients(
+                    carbohydrateG = existing.carbohydrateG + mealCarb,
+                    proteinG = existing.proteinG + mealProtein,
+                    fatG = existing.fatG + mealFat,
+                    energyKcal = existing.energyKcal + mealKcal
+                )
+            }
+            
+            MealAnalysis(
+                totalKcal30Days = totalKcal,
+                nutrientsByMealType = nutrientsMap
+            )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+            initialValue = MealAnalysis()
+        )
 
     private data class PendingSave(val recordId: String, val meal: MealType, val draft: MealDraft)
     private var pendingSave: PendingSave? = null

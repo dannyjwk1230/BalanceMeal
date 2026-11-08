@@ -454,4 +454,57 @@ class MealViewModelTest {
             records.value = records.value.filterNot { it.recordId == record.recordId } + record
         }
     }
+
+    @Test fun analysisTotalKcalExcludesRecordsOlderThan30Days() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+
+        val recentDate = LocalDate.of(2026, 11, 8)
+        val edgeDate = LocalDate.of(2026, 10, 9)
+        val pastDate = LocalDate.of(2026, 10, 8)
+
+        val item1 = MealItem(food = food, amount = 100.0) // 39 kcal
+
+        val recentRecord = MealRecord(date = recentDate, time = LocalTime.NOON, mealType = MealType.LUNCH, items = listOf(item1))
+        val edgeRecord = MealRecord(date = edgeDate, time = LocalTime.NOON, mealType = MealType.DINNER, items = listOf(item1))
+        val pastRecord = MealRecord(date = pastDate, time = LocalTime.NOON, mealType = MealType.BREAKFAST, items = listOf(item1))
+
+        meals.records.value = listOf(recentRecord, edgeRecord, pastRecord)
+        runCurrent()
+
+        val analysis = vm.analysisState.value
+        assertEquals(78.0, analysis.totalKcal30Days, 0.0001)
+    }
+
+    @Test fun analysisAggregatesNutrientsByMealType() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+
+        val date = LocalDate.of(2026, 11, 8)
+
+        val item100 = MealItem(food = food, amount = 100.0) // 39 kcal
+        val item200 = MealItem(food = food, amount = 200.0) // 78 kcal
+
+        val breakfast1 = MealRecord(date = date, time = LocalTime.NOON, mealType = MealType.BREAKFAST, items = listOf(item100))
+        val breakfast2 = MealRecord(date = date, time = LocalTime.NOON, mealType = MealType.BREAKFAST, items = listOf(item200))
+        val lunch = MealRecord(date = date, time = LocalTime.NOON, mealType = MealType.LUNCH, items = listOf(item100))
+
+        meals.records.value = listOf(breakfast1, breakfast2, lunch)
+        runCurrent()
+
+        val analysis = vm.analysisState.value
+        assertEquals(156.0, analysis.totalKcal30Days, 0.0001)
+
+        val breakfastNutrients = analysis.nutrientsByMealType[MealType.BREAKFAST]!!
+        assertEquals(3.0, breakfastNutrients.carbohydrateG, 0.0001)
+        assertEquals(6.0, breakfastNutrients.proteinG, 0.0001)
+        assertEquals(9.0, breakfastNutrients.fatG, 0.0001)
+        assertEquals(117.0, breakfastNutrients.energyKcal, 0.0001)
+
+        val lunchNutrients = analysis.nutrientsByMealType[MealType.LUNCH]!!
+        assertEquals(1.0, lunchNutrients.carbohydrateG, 0.0001)
+        assertEquals(2.0, lunchNutrients.proteinG, 0.0001)
+        assertEquals(3.0, lunchNutrients.fatG, 0.0001)
+        assertEquals(39.0, lunchNutrients.energyKcal, 0.0001)
+    }
 }
