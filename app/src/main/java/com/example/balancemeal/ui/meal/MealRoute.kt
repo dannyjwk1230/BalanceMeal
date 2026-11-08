@@ -35,7 +35,8 @@ fun MealRoute(
     onBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    MealDestinationScreen(destination, state, viewModel::onEvent, navigate, onBack)
+    val analysis by viewModel.analysisState.collectAsStateWithLifecycle()
+    MealDestinationScreen(destination, state, analysis, viewModel::onEvent, navigate, onBack)
 }
 
 /** Screen에는 Repository나 ViewModel을 전달하지 않습니다. 프리뷰도 이 경계를 사용합니다. */
@@ -43,6 +44,7 @@ fun MealRoute(
 fun MealDestinationScreen(
     destination: NavKey,
     state: MealUiState,
+    analysis: com.example.balancemeal.model.MealAnalysis,
     onEvent: (MealEvent) -> Unit,
     navigate: (NavKey) -> Unit,
     onBack: () -> Unit
@@ -51,7 +53,7 @@ fun MealDestinationScreen(
         Home -> HomeScreen(state, onEvent, { navigate(Record) }, { navigate(DataSources) })
         Record -> RecordScreen(state, onEvent, { itemId -> navigate(FoodSelection(state.currentMeal, itemId)) })
         History -> HistoryScreen(state, onEvent, { navigate(MealDetail(it)) })
-        Analysis -> AnalysisScreen(state, onEvent)
+        Analysis -> AnalysisScreen(state, analysis, onEvent)
         is FoodSelection -> {
             var query by rememberSaveable(destination.mealType, destination.itemId) { mutableStateOf("") }
             val targetAvailable = state.draftsByMealType[destination.mealType]?.items
